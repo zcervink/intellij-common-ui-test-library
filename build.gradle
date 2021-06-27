@@ -43,6 +43,14 @@ nexusStaging {
     packageGroup = 'JBoss Releases Staging Profile'
 }
 
+static def getRepositoryNode(url) {
+    Node node = new Node(null, 'repository')
+    node.appendNode('id', 'intellij-dependencies')
+    node.appendNode('name', 'intellij-dependencies')
+    node.appendNode('url', url)
+    return node
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -70,6 +78,11 @@ publishing {
                     developerConnection = 'scm:git:ssh://git@github.com:redhat-developer/intellij-common-ui-test-library.git'
                     url = 'https://github.com/redhat-developer/intellij-common-ui-test-library/'
                 }
+            }
+            pom.withXml {
+                def root = asNode()
+                def repositories = root.appendNode('repositories')
+                repositories.append(getRepositoryNode("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"))
             }
         }
     }
