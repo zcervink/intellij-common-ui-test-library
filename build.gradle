@@ -5,7 +5,7 @@ plugins {
     id 'io.codearte.nexus-staging' version "0.22.0"
 }
 
-group 'com.redhat.devtools.intellij.commonUiTestLibrary'
+group 'com.redhat.devtools.intellij'
 version projectVersion
 
 apply plugin: 'maven'
