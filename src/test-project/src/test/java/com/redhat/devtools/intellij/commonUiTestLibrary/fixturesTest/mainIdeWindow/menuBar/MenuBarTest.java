@@ -8,7 +8,7 @@
  * Contributors:
  * Red Hat, Inc. - initial API and implementation
  ******************************************************************************/
-package com.redhat.devtools.intellij.commonUiTestLibrary.fixturesTest.mainIdeWindow.toolWindowsPaneAndMenuBar;
+package com.redhat.devtools.intellij.commonUiTestLibrary.fixturesTest.mainIdeWindow.menuBar;
 
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException;
@@ -23,7 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.Duration;
 
-import static com.redhat.devtools.intellij.commonUiTestLibrary.utils.labels.ButtonLabels.closeLabel;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -46,11 +45,11 @@ class MenuBarTest extends LibraryTestBase {
     }
 
     @Test
-    public void openTipDialogUsingMenuBarTest() {
+    public void menuBarTest() {
         if (remoteRobot.isWin() || remoteRobot.isLinux()) {
             new MenuBar(remoteRobot).navigateTo("Help", "Tip of the Day");
             assertTrue(isTipDialogVisible(remoteRobot), "The 'Tip of the Day' dialog should be visible but is not");
-            remoteRobot.find(TipDialog.class, Duration.ofSeconds(10)).button(closeLabel).click();
+            remoteRobot.find(TipDialog.class, Duration.ofSeconds(10)).button("Close").click();
         }
     }
 

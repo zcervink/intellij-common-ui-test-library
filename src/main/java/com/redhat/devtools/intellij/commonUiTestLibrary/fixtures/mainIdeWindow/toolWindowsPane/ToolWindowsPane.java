@@ -13,34 +13,24 @@ package com.redhat.devtools.intellij.commonUiTestLibrary.fixtures.mainIdeWindow.
 import com.intellij.remoterobot.RemoteRobot;
 import com.intellij.remoterobot.data.RemoteComponent;
 import com.intellij.remoterobot.fixtures.CommonContainerFixture;
-import com.intellij.remoterobot.fixtures.ComponentFixture;
 import com.intellij.remoterobot.fixtures.DefaultXpath;
 import com.intellij.remoterobot.fixtures.FixtureName;
 import com.intellij.remoterobot.fixtures.JButtonFixture;
-import com.intellij.remoterobot.fixtures.JTreeFixture;
-import com.intellij.remoterobot.fixtures.TextEditorFixture;
-import com.intellij.remoterobot.fixtures.dataExtractor.RemoteText;
 import com.intellij.remoterobot.utils.WaitForConditionTimeoutException;
-import org.assertj.swing.core.MouseButton;
+import com.redhat.devtools.intellij.commonUiTestLibrary.fixtures.mainIdeWindow.toolWindowsPane.buildToolPane.GradleBuildToolPane;
+import com.redhat.devtools.intellij.commonUiTestLibrary.fixtures.mainIdeWindow.toolWindowsPane.buildToolPane.MavenBuildToolPane;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.NoSuchElementException;
 
 import static com.intellij.remoterobot.search.locators.Locators.byXpath;
 import static com.intellij.remoterobot.utils.RepeatUtilsKt.waitFor;
-import static com.redhat.devtools.intellij.commonUiTestLibrary.fixtures.mainIdeWindow.toolWindowsPane.ToolWindowsPane.ToolToBuildProject.GRADLE;
-import static com.redhat.devtools.intellij.commonUiTestLibrary.fixtures.mainIdeWindow.toolWindowsPane.ToolWindowsPane.ToolToBuildProject.MAVEN;
 import static com.redhat.devtools.intellij.commonUiTestLibrary.utils.labels.ButtonLabels.gradleStripeButtonLabel;
 import static com.redhat.devtools.intellij.commonUiTestLibrary.utils.labels.ButtonLabels.mavenStripeButtonLabel;
-import static com.redhat.devtools.intellij.commonUiTestLibrary.utils.textTranformation.TextUtils.listOfRemoteTextToString;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static com.redhat.devtools.intellij.commonUiTestLibrary.utils.labels.ButtonLabels.projectStripeButtonLabel;
 
 /**
- * Tool windows pane fixture
+ * Tool Windows Pane fixture
  *
  * @author zcervink@redhat.com
  */
@@ -48,7 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @FixtureName(name = "Tool Windows Pane")
 public class ToolWindowsPane extends CommonContainerFixture {
     private RemoteRobot remoteRobot;
-    private static String lastBuildStatusTreeText;
 
     public ToolWindowsPane(@NotNull RemoteRobot remoteRobot, @NotNull RemoteComponent remoteComponent) {
         super(remoteRobot, remoteComponent);
@@ -56,208 +45,99 @@ public class ToolWindowsPane extends CommonContainerFixture {
     }
 
     /**
-     * Create fixture for the Stripe button
-     *
-     * @param label label text of the stripe button
-     * @return fixture for the Stripe button
+     * Open project explorer
      */
-    public JButtonFixture stripeButton(String label) {
-        return button(byXpath("//div[@text='" + label + "']"), Duration.ofSeconds(2));
+    public void openProjectExplorer() {
+        openPane(projectStripeButtonLabel, ProjectExplorer.class);
     }
 
     /**
-     * Build the project
-     *
-     * @param toolToBuildProject project management tool to manage this project
+     * Close project explorer
      */
-    public void buildProject(ToolToBuildProject toolToBuildProject) {
-        switch (toolToBuildProject) {
-            case MAVEN:
-                waitFor(Duration.ofSeconds(30), Duration.ofSeconds(2), "The 'Maven' stripe button is not available.", () -> isStripeButtonAvailable("Maven"));
-                ToolWindowsPane toolWindowsPaneMaven = remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10));
-                toolWindowsPaneMaven.stripeButton(mavenStripeButtonLabel).click();
-                waitFor(Duration.ofSeconds(30), Duration.ofSeconds(2), "The Maven target tree did not appear in 30 seconds.", () -> isMavenOrGradleTreeVisible(MAVEN));
-                expandMavenTargetTreeIfNecessary();
-                toolWindowsPaneMaven.mavenTabTree().findText("Lifecycle").doubleClick();
-                toolWindowsPaneMaven.mavenTabTree().findText("install").doubleClick();
-                break;
-            case GRADLE:
-                waitFor(Duration.ofSeconds(30), Duration.ofSeconds(2), "The 'Gradle' stripe button is not available.", () -> isStripeButtonAvailable("Gradle"));
-                ToolWindowsPane toolWindowsPaneGradle = remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10));
-                toolWindowsPaneGradle.stripeButton(gradleStripeButtonLabel).click();
-                waitFor(Duration.ofSeconds(30), Duration.ofSeconds(2), "The Gradle tasks tree did not appear in 30 seconds.", () -> isMavenOrGradleTreeVisible(GRADLE));
-                expandGradleTasksTreeIfNecessary();
-                toolWindowsPaneGradle.gradleTabTree().findText("Tasks").doubleClick();
-                toolWindowsPaneGradle.gradleTabTree().findText("build").doubleClick();
-                toolWindowsPaneGradle.gradleTabTree().findAllText("build").get(1).doubleClick();
-                break;
-        }
-
-        waitUntilBuildHasFinished();
+    public void closeProjectExplorer() {
+        closePane(projectStripeButtonLabel, ProjectExplorer.class);
     }
 
     /**
-     * Test is a file with given name on given path is available in the project tree
-     *
-     * @param path path to navigate to
-     * @return true if the given file exists on the given path in the project
+     * Open maven build tool pane
      */
-    public boolean isProjectFilePresent(String... path) {
-        try {
-            navigateThroughProjectTree(ActionToPerform.HIGHLIGHT, path);
-        } catch (NoSuchElementException e) {
-            return false;
-        }
-        return true;
+    public void openMavenBuildToolPane() {
+        openPane(mavenStripeButtonLabel, MavenBuildToolPane.class);
     }
 
     /**
-     * Test if build is successful
+     * Close maven build tool pane
      */
-    public void testIfBuildIsSuccessful() {
-        ToolWindowsPane toolWindowsPane = remoteRobot.find(ToolWindowsPane.class);
-        String runConsoleOutput = listOfRemoteTextToString(toolWindowsPane.runConsole().findAllText());
-        assertTrue(runConsoleOutput.contains("BUILD SUCCESS"), "The build should be successful but is not.");
+    public void closeMavenBuildToolPane() {
+        closePane(mavenStripeButtonLabel, MavenBuildToolPane.class);
     }
 
     /**
-     * Enumeration with building tools
+     * Open gradle build tool pane
      */
-    public enum ToolToBuildProject {
-        MAVEN("Maven"),
-        GRADLE("Gradle");
+    public void openGradleBuildToolPane() {
+        openPane(gradleStripeButtonLabel, GradleBuildToolPane.class);
+    }
 
-        private final String textRepresentation;
+    /**
+     * Close gradle build tool pane
+     */
+    public void closeGradleBuildToolPane() {
+        closePane(gradleStripeButtonLabel, GradleBuildToolPane.class);
+    }
 
-        ToolToBuildProject(String textRepresentation) {
-            this.textRepresentation = textRepresentation;
+    private void openPane(String label, Class fixtureClass) {
+        if (!isPaneOpened(fixtureClass)) {
+            clickOnStripeButton(label);
         }
+    }
 
-        @Override
-        public String toString() {
-            return textRepresentation;
+    private void closePane(String label, Class fixtureClass) {
+        if (isPaneOpened(fixtureClass)) {
+            clickOnStripeButton(label, true);
         }
     }
 
-    private JTreeFixture projectViewTree() {
-        return find(JTreeFixture.class, JTreeFixture.Companion.byType(), Duration.ofSeconds(10));
-    }
-
-    private JTreeFixture mavenTabTree() {
-        return find(JTreeFixture.class, byXpath("//div[@class='SimpleTree']"));
-    }
-
-    private JTreeFixture gradleTabTree() {
-        return find(JTreeFixture.class, byXpath("//div[@class='ExternalProjectTree']"));
-    }
-
-    private void expandMavenTargetTreeIfNecessary() {
+    private boolean isPaneOpened(Class fixtureClass) {
         ToolWindowsPane toolWindowsPane = remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10));
         try {
-            toolWindowsPane.mavenTabTree().findText("Lifecycle");
-        } catch (NoSuchElementException e) {
-            List<RemoteText> mavenBuildLabels = toolWindowsPane.mavenTabTree().findAllText();
-            Collections.reverse(mavenBuildLabels);
-            for (RemoteText label : mavenBuildLabels) {
-                label.doubleClick();
-            }
-        }
-    }
-
-    private void expandGradleTasksTreeIfNecessary() {
-        ToolWindowsPane toolWindowsPane = remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10));
-        String labels = listOfRemoteTextToString(toolWindowsPane.gradleTabTree().findAllText());
-        // if the Gradle tasks tree is collapsed -> expand it
-        if (!labels.contains("Tasks")) {
-            toolWindowsPane.gradleTabTree().findText(labels).doubleClick();
-        }
-    }
-
-    private boolean isMavenOrGradleTreeVisible(ToolToBuildProject toolToBuildProject) {
-        ToolWindowsPane toolWindowsPane = remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10));
-        ComponentFixture tabTree;
-
-        try {
-            if (toolToBuildProject == MAVEN) {
-                tabTree = toolWindowsPane.mavenTabTree();
-            } else if (toolToBuildProject == GRADLE) {
-                tabTree = toolWindowsPane.gradleTabTree();
-            } else {
-                return false;
-            }
-        } catch (WaitForConditionTimeoutException e) {
-            return false;
-        }
-
-        String treeContent = listOfRemoteTextToString(tabTree.findAllText());
-        return !treeContent.toLowerCase(Locale.ROOT).contains("nothing") && !treeContent.equals("");
-    }
-
-    private boolean isStripeButtonAvailable(String label) {
-        try {
-            remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10)).stripeButton(label);
-        } catch (WaitForConditionTimeoutException e) {
-            return false;
-        }
-        return true;
-    }
-
-    private void navigateThroughProjectTree(ActionToPerform action, String... pathArray) {
-        for (int i = 0; i < pathArray.length; i++) {
-            String pathItem = pathArray[i];
-
-            // for last item perform different action
-            if (i == pathArray.length - 1) {
-                switch (action) {
-                    case OPEN:
-                        projectViewTree().findText(pathItem).doubleClick();
-                        break;
-                    case OPEN_CONTEXT_MENU:
-                        projectViewTree().findText(pathItem).click(MouseButton.RIGHT_BUTTON);
-                        break;
-                    case HIGHLIGHT:
-                        projectViewTree().findText(pathItem).click();
-                        break;
-                }
-            } else {
-                projectViewTree().findText(pathItem).doubleClick();
-            }
-        }
-    }
-
-    private void waitUntilBuildHasFinished() {
-        waitFor(Duration.ofSeconds(300), Duration.ofSeconds(3), "The build did not finish in 5 minutes.", () -> didBuildStatusTreeTextStopChanging());
-    }
-
-    private boolean didBuildStatusTreeTextStopChanging() {
-        String updatedBuildStatusTreeText = getBuildStatusTreeText();
-
-        if (lastBuildStatusTreeText != null && lastBuildStatusTreeText.equals(updatedBuildStatusTreeText)) {
-            lastBuildStatusTreeText = null;
+            toolWindowsPane.find(fixtureClass, Duration.ofSeconds(10));
             return true;
-        } else {
-            lastBuildStatusTreeText = updatedBuildStatusTreeText;
+        } catch (WaitForConditionTimeoutException e) {
             return false;
         }
     }
 
-    private String getBuildStatusTreeText() {
-        ToolWindowsPane toolWindowsPane = remoteRobot.find(ToolWindowsPane.class);
-        String buildStatusTreeText = listOfRemoteTextToString(toolWindowsPane.buildStatusTree().findAllText());
-        return buildStatusTreeText;
+    private void clickOnStripeButton(String label) {
+        clickOnStripeButton(label, false);
     }
 
-    private JTreeFixture buildStatusTree() {
-        return find(JTreeFixture.class, byXpath("//div[@class='Tree']"));
+    private void clickOnStripeButton(String label, boolean isPaneOpened) {
+        waitFor(Duration.ofSeconds(30), Duration.ofSeconds(2), "The '" + label + "' stripe button is not available.", () -> isStripeButtonAvailable(label, isPaneOpened));
+        remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10)).stripeButton(label, isPaneOpened).click();
     }
 
-    private TextEditorFixture runConsole() {
-        return textEditor(byXpath("//div[@accessiblename='Editor']"), Duration.ofSeconds(2));
+    private boolean isStripeButtonAvailable(String label, boolean isPaneOpened) {
+        try {
+            remoteRobot.find(ToolWindowsPane.class, Duration.ofSeconds(10)).stripeButton(label, isPaneOpened);
+        } catch (WaitForConditionTimeoutException e) {
+            return false;
+        }
+        return true;
     }
 
-    private enum ActionToPerform {
-        OPEN,
-        OPEN_CONTEXT_MENU,
-        HIGHLIGHT
+    private JButtonFixture stripeButton(String label) {
+        return stripeButton(label, false);
+    }
+
+    private JButtonFixture stripeButton(String label, boolean isPaneOpened) {
+        if (isPaneOpened) {
+            if (label.equals(mavenStripeButtonLabel) || label.equals(gradleStripeButtonLabel)) {
+                return button(byXpath("//div[@disabledicon='toolWindow" + label + ".svg']"), Duration.ofSeconds(2));
+            } else if (label.equals(projectStripeButtonLabel)) {
+                return button(byXpath("//div[@tooltiptext='Project']"), Duration.ofSeconds(2));
+            }
+        }
+        return button(byXpath("//div[@text='" + label + "']"), Duration.ofSeconds(2));
     }
 }
